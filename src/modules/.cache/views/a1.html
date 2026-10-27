@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flujo de Pago con QR (Otros Bancos)</title>
+<style>
+:root{--bg:#f4f6f9;--fg:#18222f;--muted:#5a6676;--line:#c3ccd8;--panel:#fff;--stage:#fbfcfe;--dot:#d6dde7;--ok:#0a7a72;--new:#b4571a;--newbg:#fff1e4;--acc:#2a5db0;--glow:rgba(10,122,114,.55);--glowp:rgba(180,87,26,.55);
+--zid:#e2ebfa;--zidb:#8aa5d4;--zred:#fbe8e6;--zredb:#d49a95;--zdat:#faf0cf;--zdatb:#cdb36a;--zext:#eceff3;--zextb:#a3adbb;
+--node:#fff;--nodeb:#8c99ab;--key:#eaf2ff;--keyb:#2a5db0;--data:#fdf6dc;--datab:#cdb36a;--ext:#eceff3;--extb:#a3adbb;--fr:#6c7888;
+font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+@media(prefers-color-scheme:dark){:root{--bg:#0f151d;--fg:#e5eaf1;--muted:#9aa6b7;--line:#2b3645;--panel:#151d28;--stage:#111923;--dot:#222d3b;--ok:#3fd0c5;--new:#f0a35a;--newbg:#33210f;--acc:#7fa8f2;--glow:rgba(63,208,197,.6);--glowp:rgba(240,163,90,.6);
+--zid:#14233d;--zidb:#3f5f94;--zred:#2a1a20;--zredb:#6e4048;--zdat:#2b2514;--zdatb:#7a672d;--zext:#19202a;--zextb:#47536a;
+--node:#1a2431;--nodeb:#58667a;--key:#14263f;--keyb:#6fa0f0;--data:#2b2514;--datab:#7a672d;--ext:#19202a;--extb:#47536a;--fr:#8b97a8;color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font-size:15px;line-height:1.55;padding:0 16px 64px}
+.wrap{max-width:1240px;margin:0 auto}h1{font-size:clamp(22px,3vw,34px);margin:28px 0 8px;line-height:1.15}.lede{color:var(--muted);max-width:74ch;margin:0}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 12px}.tab,.ctl{font:600 14px system-ui;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:8px 15px;cursor:pointer}
+.ctl{border-radius:8px;padding:7px 12px;font-size:13px}.tab[aria-selected=true]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+button:focus-visible,.step:focus-visible,.node:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.stage{background:var(--stage);border:1px solid var(--line);border-radius:12px;padding:10px;overflow-x:auto;background-image:radial-gradient(var(--dot) 1px,transparent 1px);background-size:22px 22px}
+.stage svg{display:block;min-width:900px;width:100%;height:auto}
+.bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:10px 2px 0}.legend{margin-left:auto;font-size:13px;color:var(--muted);display:flex;gap:16px}
+.legend i{display:inline-block;width:24px;border-top:3px solid var(--ok);vertical-align:middle;margin-right:6px}.legend i.p{border-top:3px dashed var(--new)}
+.hint{margin:8px 2px 0;font-size:13px;color:var(--muted)}
+.now{margin:12px 2px 0;padding:12px 16px;border:1px solid var(--line);border-left:4px solid var(--ok);border-radius:8px;background:var(--panel);min-height:64px}.now.p{border-left-color:var(--new)}.now b{display:block}.now span{color:var(--muted);font-size:14px}
+.steps{list-style:none;margin:12px 0 0;padding:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:4px 16px}
+.steps h3,.steps p.who{grid-column:1/-1;margin:2px 8px}.steps p.who{color:var(--muted);font-size:14px}
+.step{display:grid;grid-template-columns:28px 1fr;gap:10px;padding:9px 8px;border-radius:8px;cursor:pointer;border:1px solid transparent}
+.step:hover,.step.on{background:color-mix(in srgb,var(--acc) 12%,transparent);border-color:var(--line)}
+.step .n{width:24px;height:24px;border-radius:50%;background:var(--ok);color:#fff;font:700 12px/24px system-ui;text-align:center}.step.p .n{background:var(--new)}
+.step b{display:block;font-size:14px}.step .d{display:block;color:var(--muted);font-size:13px}
+.chip{font:500 10.5px ui-monospace,monospace;padding:1px 6px;border-radius:8px;margin-left:6px;color:#fff;background:var(--ok)}.chip.p{background:var(--new)}
+.zone{stroke-width:1.4;stroke-dasharray:7 5;opacity:.6}.zone.id{fill:var(--zid);stroke:var(--zidb)}.zone.red{fill:var(--zred);stroke:var(--zredb)}.zone.ext{fill:var(--zext);stroke:var(--zextb)}.zone.dat{fill:var(--zdat);stroke:var(--zdatb)}
+.t-zone{font:600 11px system-ui;letter-spacing:.12em;fill:var(--muted)}.frame{fill:none;stroke:var(--fr);stroke-width:1.6;stroke-dasharray:8 5}
+.t-frame{font:600 12px system-ui;fill:var(--fg)}.t-frame-s{font:400 11px system-ui;fill:var(--muted)}
+.node rect{fill:var(--node);stroke:var(--nodeb);stroke-width:1.3}.node.key rect{fill:var(--key);stroke:var(--keyb);stroke-width:2}.node.ext rect{fill:var(--ext);stroke:var(--extb)}.node.data rect{fill:var(--data);stroke:var(--datab)}
+.node.pend rect,.node.p rect{fill:var(--newbg);stroke:var(--new);stroke-dasharray:5 4;stroke-width:1.6}
+.node{transition:opacity .35s,filter .35s;transform-box:fill-box;transform-origin:center;cursor:pointer}.node.dim{opacity:.3}.node.sel rect{stroke:var(--acc);stroke-width:3}
+.node.glow{filter:drop-shadow(0 0 9px var(--glow));animation:pulse 1.1s ease-in-out infinite}.node.glow rect{stroke:var(--ok);stroke-width:2.6}.node.glow.p{filter:drop-shadow(0 0 9px var(--glowp))}.node.glow.p rect{stroke:var(--new)}
+.node .t1{font:600 13px system-ui;fill:var(--fg)}.node .t2{font:400 11px system-ui;fill:var(--muted)}@keyframes pulse{50%{transform:scale(1.015)}}
+.edge{fill:none;stroke:var(--ok);stroke-width:2.4;transition:opacity .35s}.edge.p{stroke:var(--new)}.edge.flow{stroke-dasharray:7 7;animation:dash .9s linear infinite}@keyframes dash{to{stroke-dashoffset:-14}}
+.edge.future{opacity:.12}.edge.done{opacity:.5}.edge.p.done{stroke-dasharray:7 5}.edge.on{stroke-width:3.6;filter:drop-shadow(0 0 5px var(--glow))}.edge.p.on{filter:drop-shadow(0 0 5px var(--glowp))}
+.pkt{fill:#fff;stroke:var(--ok);stroke-width:3;filter:drop-shadow(0 0 7px var(--glow))}.pkt.p{stroke:var(--new);filter:drop-shadow(0 0 7px var(--glowp))}
+.badge circle{fill:var(--ok);stroke:var(--stage);stroke-width:2}.badge.p circle{fill:var(--new)}.badge text{font:700 11.5px system-ui;fill:#fff;text-anchor:middle;dominant-baseline:central}.badge{cursor:pointer;transition:opacity .35s}.badge.future{opacity:.2}
+.edge-lbl{font:500 11px system-ui;fill:var(--fg);paint-order:stroke;stroke:var(--stage);stroke-width:5px;stroke-linejoin:round;transition:opacity .35s}.edge-lbl.future{opacity:.15}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel);margin-top:12px}table{border-collapse:collapse;width:100%;min-width:640px;font-size:14px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}th{font:600 11px system-ui;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}tr:last-child td{border-bottom:0}
+.next{margin-top:14px;padding:14px 16px;border:1px dashed var(--new);border-radius:10px;background:var(--newbg);font-size:14px}h2{font-size:19px;margin:40px 0 4px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head><body><div class="wrap">
+<h1>Arquitectura del Flujo de Pago con QR</h1><p class="lede">Visualiza la secuencia completa desde que el cliente expone el QR, pasando por pay_emisor, la pignoración del saldo, conciliación hasta el pago definitivo. Elige un recorrido y pulsa ▶. Línea continua: construido. Naranja punteada: propuesto.</p>
+<div class="tabs" id="tabs" role="tablist"></div>
+<div class="stage"><svg id="svg" role="img" aria-label="Diagrama de flujo de pagos de QR, conectando cliente, comercio, pay_emisor, pay_out_sync_accl, accl, paycore y el banco mediante 19 pasos detallados.">
+<defs><marker id="ar-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--ok)"/></marker>
+<marker id="ar-p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--new)"/></marker></defs>
+<g id="zones"></g><g id="frames"></g><g id="edges"></g><g id="nodes"></g><g id="badges"></g><g id="pkt"></g></svg></div>
+<p class="hint">Haz clic en cualquier caja para ver cómo llega la petición hasta ella.</p>
+<div class="bar" id="bar"><button class="ctl" id="prev" aria-label="Anterior">⏮</button><button class="ctl" id="play" aria-label="Reproducir o pausar">⏸</button><button class="ctl" id="next" aria-label="Siguiente">⏭</button><button class="ctl" id="replay">↻ Repetir</button>
+<div class="legend"><span><i></i>Construido</span><span><i class="p"></i>Propuesto</span></div></div>
+<div class="now" id="now" aria-live="polite"></div><ol class="steps" id="steps"></ol>
+
+<h2>Ficha de Componentes</h2>
+<div class="tablewrap">
+<table class="table">
+  <thead>
+    <tr>
+      <th>Módulo / Actor</th>
+      <th>Descripción</th>
+      <th>Rol en el Flujo</th>
+      <th>Estado</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><b>Cliente</b></td>
+      <td>Actor final (Usuario del banco)</td>
+      <td>Inicia la transacción exponiendo su código QR para ser leído.</td>
+      <td><span class="chip p">Propuesto</span></td>
+    </tr>
+    <tr>
+      <td><b>QR (Otros Bancos)</b></td>
+      <td>Interfaz / Dispositivo móvil</td>
+      <td>Recibe y expone la información del código QR necesario para la operación.</td>
+      <td><span class="chip p">Propuesto</span></td>
+    </tr>
+    <tr>
+      <td><b>comercio</b></td>
+      <td>Sistema o POS del comercio / establecimiento</td>
+      <td>Lee el código y canaliza la solicitud del cliente consumiendo servicios de lectura.</td>
+      <td><span class="chip p">Propuesto</span></td>
+    </tr>
+    <tr>
+      <td><b>pay_emisor</b></td>
+      <td>Core emisor de transacciones de pago QR</td>
+      <td>Valida, orquesta y dirige la lógica del pago entre el comercio, saldo y el core.</td>
+      <td><span class="chip p">Propuesto</span></td>
+    </tr>
+    <tr>
+      <td><b>paycore</b></td>
+      <td>Módulo de procesamiento financiero de saldos</td>
+      <td>Verifica y aplica pignoración, confirmación o cancelación de saldo.</td>
+      <td><span class="chip p">Propuesto</span></td>
+    </tr>
+    <tr>
+      <td><b>pay_out_sync_accl</b></td>
+      <td>Sincronizador externo con el adquirente/accl</td>
+      <td>Mapea, decodifica e intermedia las transacciones autorizadas hacia el compensador.</td>
+      <td><span class="chip p">Propuesto</span></td>
+    </tr>
+    <tr>
+      <td><b>accl</b></td>
+      <td>Servicio o módulo de compensación y liquidación</td>
+      <td>Genera las órdenes formales de pago que viajan directamente al Banco.</td>
+      <td><span class="chip p">Propuesto</span></td>
+    </tr>
+    <tr>
+      <td><b>Banco</b></td>
+      <td>Entidad bancaria procesadora externa</td>
+      <td>Recibe las transacciones, las aprueba y liquida de manera interactiva.</td>
+      <td><span class="chip p">Propuesto</span></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="next">
+  <b>📐 Próximas Implementaciones (Pendientes)</b><br>
+  Todo el flujo actual se visualiza como propuesto, lo que significa que el equipo de arquitectura evaluará las interfaces y la sincronización con el Banco externo, la pignoración de saldo directo en `paycore` y el manejo de los estados de respuesta para el POS en el `comercio`.
+</div>
+
+</div>
+<script>
+/* ================= DATOS ================= */
+const VB=[1160, 640];
+const ZONES=[];
+const FRAMES=[];
+const NODES={
+  cliente: {x: 40, y: 115, w: 80, h: 65, t: 'Cliente', d: 'Actor', k: 'actor', pend: 1},
+  qr_bancos: {x: 180, y: 100, w: 100, h: 80, t: 'QR (OTROS BANCOS)', d: 'Móvil / Código', k: 'ext', pend: 1},
+  comercio: {x: 180, y: 310, w: 100, h: 80, t: 'comercio', d: 'Establecimiento', k: 'svc', pend: 1},
+  pay_emisor: {x: 370, y: 200, w: 140, h: 70, t: 'pay_emisor', d: 'Servicio Emisor', k: 'svc', pend: 1},
+  sync_accl: {x: 640, y: 490, w: 150, h: 65, t: 'pay_out_sync_accl', d: 'Sincronizador', k: 'svc', pend: 1},
+  accl: {x: 880, y: 380, w: 110, h: 60, t: 'accl', d: 'Compensación', k: 'svc', pend: 1},
+  paycore: {x: 480, y: 550, w: 110, h: 60, t: 'paycore', d: 'Gestor de Saldos', k: 'svc', pend: 1},
+  banco: {x: 1040, y: 370, w: 90, h: 80, t: 'Banco', d: 'Entidad Externa', k: 'ext', pend: 1}
+};
+
+const L={
+  L1: {n: ['cliente', 'qr_bancos'], pts: [[120, 140], [180, 140]], p: 1},
+  L2: {n: ['comercio', 'qr_bancos'], pts: [[230, 310], [230, 180]], p: 1},
+  L3: {n: ['comercio', 'pay_emisor'], pts: [[280, 320], [330, 320], [330, 220], [370, 220]], p: 1},
+  L4: {n: ['pay_emisor', 'sync_accl'], pts: [[510, 210], [750, 210], [750, 490]], p: 1},
+  L5: {n: ['sync_accl', 'pay_emisor'], pts: [[715, 490], [715, 240], [510, 240]], p: 1},
+  L6: {n: ['pay_emisor', 'comercio'], pts: [[370, 255], [300, 255], [300, 335], [280, 335]], p: 1},
+  L7: {n: ['comercio', 'pay_emisor'], pts: [[280, 370], [360, 370], [360, 268], [370, 268]], p: 1},
+  L8: {n: ['pay_emisor', 'paycore'], pts: [[410, 270], [410, 585], [480, 585]], p: 1},
+  L9: {n: ['paycore', 'pay_emisor'], pts: [[480, 565], [440, 565], [440, 270]], p: 1},
+  L10: {n: ['pay_emisor', 'sync_accl'], pts: [[475, 270], [475, 430], [580, 430], [580, 505], [640, 505]], p: 1},
+  L11: {n: ['sync_accl', 'accl'], pts: [[790, 510], [820, 510], [820, 410], [880, 410]], p: 1},
+  L12: {n: ['accl', 'banco'], pts: [[990, 395], [1040, 395]], p: 1},
+  L13: {n: ['banco', 'accl'], pts: [[1040, 425], [990, 425]], p: 1},
+  L14: {n: ['banco', 'qr_bancos'], pts: [[1085, 370], [1085, 50], [250, 50], [250, 100]], p: 1},
+  L15: {n: ['accl', 'sync_accl'], pts: [[935, 440], [935, 540], [790, 540]], p: 1},
+  L16: {n: ['sync_accl', 'pay_emisor'], pts: [[640, 520], [540, 520], [540, 250], [510, 250]], p: 1},
+  L17: {n: ['pay_emisor', 'paycore'], pts: [[490, 270], [490, 490], [515, 490], [515, 550]], p: 1},
+  L18: {n: ['paycore', 'pay_emisor'], pts: [[545, 550], [545, 510], [460, 510], [460, 270]], p: 1},
+  L19: {n: ['pay_emisor', 'comercio'], pts: [[370, 240], [290, 240], [290, 350], [280, 350]], p: 1}
+};
+
+const NAME={
+  cliente: 'el Cliente',
+  qr_bancos: 'el QR de otros bancos',
+  comercio: 'el Comercio',
+  pay_emisor: 'el Módulo pay_emisor',
+  sync_accl: 'el Módulo sync_accl',
+  accl: 'la Compensación accl',
+  paycore: 'el Core paycore',
+  banco: 'el Banco procesador'
+};
+
+const ROUTES={
+  cliente: [['L1', 'Expone QR', 'Paso de Inicio', 'El Cliente interactúa en primera instancia']],
+  qr_bancos: [['L1', 'Expone QR', 'Escaneo inicial', 'Flujo se gatilla con la visualización'], ['L2', 'Leer QR', 'Escaneo desde POS', 'Comercio efectúa la lectura física']],
+  comercio: [['L3', 'Consume servicio Leer QR', 'Lectura de POS', 'Petición inicial procesada para leer el QR'], ['L6', 'Responde Info QR TransaccionId', 'Info recibida', 'El comercio recibe los detalles de la solicitud de lectura'], ['L19', 'Responde Pago Exitoso/Rechazado', 'Resultado', 'Fin del flujo con la notificación directa al POS']],
+  pay_emisor: [['L3', 'Consume servicio Leer QR', 'Petición en emisor', 'El emisor recibe solicitud de lectura del comercio'], ['L5', 'Responde Info QR', 'Información devuelta', 'Obtención de la metadata del QR'], ['L7', 'Consume servicio Pagar QR TransaccionId', 'Inicio del pago', 'Comercio ordena ejecutar la transferencia'], ['L9', 'Saldo pignorado', 'Reserva de recursos', 'Core confirma retención preventiva'], ['L16', 'Responde pago exitoso pago error', 'Acreditación', 'Conexión con el adquirente concluida'], ['L18', 'Responde Confirmacion/Cancelacion', 'Conciliación de saldo', 'Actualización definitiva']]
+};
+
+const FLOWS={
+  all: {title: 'Flujo Completo', who: 'Muestra la secuencia interactiva del ciclo de vida de un pago QR (19 pasos).', steps: []},
+  f1: {
+    title: 'Flujos 1-6: Lectura y Reconocimiento',
+    who: 'Se inicializa la transacción, lectura del QR y recuperación de metadatos en pay_emisor.',
+    steps: [
+      ['L1', 'Expone QR', 'Cliente expone QR', 'El cliente presenta el código QR en su móvil.'],
+      ['L2', 'Leer QR', 'Comercio lee QR', 'El establecimiento escanea el QR presentado por el cliente.'],
+      ['L3', 'Consume servicio Leer QR', 'Consume servicio Leer QR', 'Comercio envía el QR leído a pay_emisor.'],
+      ['L4', 'Decodificar o descifrar QR', 'Decodificar o descifrar QR', 'pay_emisor solicita decodificar el código QR.'],
+      ['L5', 'Responde Info QR', 'Responde Info QR', 'Se retorna la información procesada del QR.'],
+      ['L6', 'Responde Info QR TransaccionId', 'Responde Info QR TransaccionId', 'pay_emisor devuelve los datos y el ID de transacción al comercio.']
+    ]
+  },
+  f2: {
+    title: 'Flujos 7-10: Reserva de Saldo y Envío',
+    who: 'El comercio solicita el pago, pay_emisor reserva/pignora los fondos en paycore y gestiona la orden.',
+    steps: [
+      ['L7', 'Consume servicio Pagar QR TransaccionId', 'Solicitud de Pago QR', 'Comercio consume el servicio enviando el ID de transacción.'],
+      ['L8', 'Verificar saldo', 'Verificar saldo', 'pay_emisor valida la disponibilidad de fondos en paycore.'],
+      ['L9', 'Saldo pignorado', 'Saldo pignorado', 'paycore responde confirmando la pignoración (bloqueo preventivo) del saldo.'],
+      ['L10', 'Realizar pago QR', 'Realizar pago QR', 'pay_emisor instruye al sincronizador iniciar el proceso de pago.']
+    ]
+  },
+  f3: {
+    title: 'Flujos 11-15: Compensación y Autorización',
+    who: 'Se transfiere la orden hacia accl, el Banco ejecuta y se confirma la liquidación.',
+    steps: [
+      ['L11', 'Generar orden de pago(1A)', 'Generar orden de pago (1A)', 'Se crea la instrucción formal hacia el módulo de compensación.'],
+      ['L12', 'Mensaje 2A', 'Mensaje 2A hacia el Banco', 'Se transmite la orden de cobro/pago al banco externo.'],
+      ['L13', 'Mensaje 3A', 'Mensaje 3A de respuesta', 'El banco confirma la recepción y aplicación inicial.'],
+      ['L14', 'Paga QR', 'Pago de QR en Dispositivo', 'Se registra / consolida el pago contra el celular del usuario.'],
+      ['L15', 'Responde pago exitoso pago error(4A)', 'Respuesta final de pago', 'accl notifica el éxito o rechazo de la compensación de vuelta al sincronizador.']
+    ]
+  },
+  f4: {
+    title: 'Flujos 16-19: Cierre y Confirmación final',
+    who: 'Sincronización de vuelta a pay_emisor, confirmación y notificación final de éxito al comercio.',
+    steps: [
+      ['L16', 'Responde pago exitoso pago error', 'Respuesta de sincronización', 'El servicio de sincronización actualiza el estado a pay_emisor.'],
+      ['L17', 'Confirma/Cancela saldo', 'Confirmar o cancelar saldo', 'pay_emisor ordena consolidar o liberar el saldo en paycore.'],
+      ['L18', 'Responde Confirmacion/Cancelacion', 'Confirmación de saldo', 'paycore reporta la culminación de la afectación del balance.'],
+      ['L19', 'Responde Pago Exitoso/Rechazado', 'Respuesta al Comercio', 'pay_emisor finaliza informando al comercio el resultado definitivo.']
+    ]
+  }
+};
+
+const TABS={
+  all: 'Arquitectura',
+  f1: '1. Lectura y Reconocimiento',
+  f2: '2. Reserva de Saldo',
+  f3: '3. Compensación',
+  f4: '4. Cierre y Confirmación'
+};
+
+/* ================= MOTOR ================= */
+const NS='http://www.w3.org/2000/svg',$=i=>document.getElementById(i);
+const el=(n,a={},p)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e};
+const T=(p,c,x,y,t,a)=>{const e=el('text',{class:c,x,y,...(a?{'text-anchor':a}:{})},p);e.textContent=t;return e};
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches,pathD=p=>'M'+p.map(q=>q.join(',')).join(' L');
+$('svg').setAttribute('viewBox','0 0 '+VB.join(' '));
+function pointAt(pts,t){const seg=[];let tot=0;for(let i=1;i<pts.length;i++){const l=Math.abs(pts[i][0]-pts[i-1][0])+Math.abs(pts[i][1]-pts[i-1][1]);seg.push(l);tot+=l}
+ let d=tot*t;for(let i=0;i<seg.length;i++){if(d<=seg[i]||i===seg.length-1){const k=seg[i]?d/seg[i]:0,a=pts[i],b=pts[i+1];return{x:a[0]+(b[0]-a[0])*k,y:a[1]+(b[1]-a[1])*k,horiz:a[1]===b[1],len:seg[i]}}d-=seg[i]}}
+function drawStatic(){ZONES.forEach(o=>{el('rect',{class:'zone '+o.c,x:o.x,y:o.y,width:o.w,height:o.h,rx:14},$('zones'));T($('zones'),'t-zone',o.x+12,o.y+17,o.l)});
+ FRAMES.forEach(o=>{el('rect',{class:'frame',x:o.x,y:o.y,width:o.w,height:o.h,rx:10},$('frames'));T($('frames'),'t-frame',o.x+12,o.y+19,o.l);T($('frames'),'t-frame-s',o.x+12,o.y+33,o.s||'')})}
+let nodeEls={},cur=0,timer=null,playing=true,flowKey='all',edgeEls=[],badgeEls=[],lblEls=[],stepEls=[],raf=0;
+function drawNodes(){const g=$('nodes');g.innerHTML='';nodeEls={};for(const id in NODES){const n=NODES[id];
+ const gr=el('g',{class:['node',n.k||'',n.pend?'pend':''].join(' '),tabindex:0,role:'button','aria-label':'Ver cómo llega la petición a '+n.t},g);nodeEls[id]=gr;
+ gr.addEventListener('click',()=>{stop();showRoute(id)});gr.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();stop();showRoute(id)}});
+ el('rect',{x:n.x,y:n.y,width:n.w,height:n.h,rx:9},gr);const cx=n.x+n.w/2,cy=n.y+n.h/2;T(gr,'t1',cx,cy+(n.d?-3:5),n.t+(n.pend?' 📐':''),'middle');if(n.d)T(gr,'t2',cx,cy+14,n.d,'middle')}}
+function showRoute(id){FLOWS.route={title:'Cómo llega la petición a '+(NAME[id]||NODES[id].t),who:'Camino hasta esta caja. Haz clic en otra para ver la suya.',steps:(ROUTES[id]||[]).map(x=>[...x]),sel:id};show('route')}
+function show(key){stop();flowKey=key;const f=FLOWS[key];
+ document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',t.dataset.flow===key));
+ ['edges','badges','pkt'].forEach(i=>$(i).innerHTML='');edgeEls=[];badgeEls=[];lblEls=[];stepEls=[];drawNodes();
+ const list=$('steps');list.innerHTML=`<h3>${f.title}</h3><p class="who">${f.who}</p>`;$('bar').style.display=f.steps.length?'flex':'none';
+ if(!f.steps.length){for(const id in L){const l=L[id];el('path',{class:'edge flow'+(l.p?' p':''),d:pathD(l.pts),'marker-end':`url(#ar-${l.p?'p':'ok'})`},$('edges')).style.opacity=.75}
+  $('now').className='now';$('now').innerHTML='<b>'+f.title+'</b><span>'+f.who+'</span>';return}
+ const uses={},seen={};f.steps.forEach(s=>{if(s[0])uses[s[0]]=(uses[s[0]]||0)+1});
+ f.steps.forEach((s,i)=>{const l=s[0]?L[s[0]]:null,p=!!(l&&l.p);
+  if(l){const idx=seen[s[0]]=(seen[s[0]]??-1)+1,n=uses[s[0]];s=[...s];if(s[4]==null)s[4]=n>1?(idx+1)/(n+1):.5;
+   edgeEls[i]=el('path',{class:'edge'+(p?' p':''),d:pathD(s[5]?[...l.pts].reverse():l.pts),'marker-end':`url(#ar-${p?'p':'ok'})`},$('edges'));
+   const q=pointAt(l.pts,s[4]),off=q.len<70?(q.horiz?[0,-17]:[17,0]):[0,0];
+   const b=el('g',{class:'badge'+(p?' p':''),transform:`translate(${q.x+off[0]},${q.y+off[1]})`},$('badges'));el('circle',{r:12},b);T(b,'',0,0,i+1);b.addEventListener('click',()=>{stop();go(i)});badgeEls[i]=b;
+   if(s[1]){const lx=q.horiz?0:(q.x>VB[0]/2?-18:18),dy=q.horiz?(s[5]?26:(q.len<70?-30:-18)):4;
+    lblEls[i]=T($('badges'),'edge-lbl',q.x+off[0]+(q.horiz?0:lx),q.y+off[1]+dy,s[1],q.horiz?'middle':(lx<0?'end':'start'))}}
+  const li=document.createElement('li');li.className='step'+(p?' p':'');li.tabIndex=0;
+  li.innerHTML=`<div class="n">${i+1}</div><div><b>${s[2]}${l?`<span class="chip${p?' p':''}">${p?'propuesto':'✅ listo'}</span>`:''}</b>${(s[3]||'').trim()?`<span class="d">${s[3]}</span>`:''}</div>`;
+  li.addEventListener('click',()=>{stop();go(i)});li.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();stop();go(i)}});list.appendChild(li);stepEls[i]=li});
+ if(f.sel&&nodeEls[f.sel])nodeEls[f.sel].classList.add('sel');go(0);if(!reduce)start();else setPlayIcon()}
+const nodesOf=s=>s[0]?L[s[0]].n:[];
+function go(i){const f=FLOWS[flowKey];cur=Math.max(0,Math.min(f.steps.length-1,i));
+ f.steps.forEach((s,k)=>{const st=k<cur?'done':k===cur?'on':'future',e=edgeEls[k];if(e){e.classList.remove('done','on','future','flow');e.classList.add(st);if(st==='on')e.classList.add('flow')}
+  if(badgeEls[k])badgeEls[k].classList.toggle('future',k>cur);if(lblEls[k])lblEls[k].classList.toggle('future',k>cur);stepEls[k].classList.toggle('on',k===cur)});
+ const s=f.steps[cur],p=!!(s[0]&&L[s[0]].p),act=new Set(nodesOf(s)),used=new Set();f.steps.forEach(x=>nodesOf(x).forEach(n=>used.add(n)));
+ for(const id in nodeEls){const n=nodeEls[id];n.classList.toggle('glow',act.has(id));n.classList.toggle('p',act.has(id)&&p);n.classList.toggle('dim',!used.has(id))}
+ $('now').className='now'+(p?' p':'');$('now').innerHTML=`<b>Paso ${cur+1} de ${f.steps.length} · ${s[2]}</b><span>${(s[3]||'').trim()||s[1]||''}</span>`;sendPacket(s)}
+function sendPacket(s){cancelAnimationFrame(raf);const g=$('pkt');g.innerHTML='';const e=edgeEls[cur];if(!s[0]||!e||reduce)return;
+ const len=e.getTotalLength(),c=el('circle',{class:'pkt'+(L[s[0]].p?' p':''),r:6},g),t0=performance.now();
+ const tick=now=>{const k=Math.min(1,(now-t0)/1300),pt=e.getPointAtLength(len*k);c.setAttribute('cx',pt.x);c.setAttribute('cy',pt.y);if(k<1)raf=requestAnimationFrame(tick)};raf=requestAnimationFrame(tick)}
+const setPlayIcon=()=>$('play').textContent=playing?'⏸':'▶';
+function start(){playing=true;setPlayIcon();clearInterval(timer);timer=setInterval(()=>{if(cur>=FLOWS[flowKey].steps.length-1){clearInterval(timer);setTimeout(()=>{if(playing){go(0);start()}},1800);return}go(cur+1)},2600)}
+function stop(){playing=false;clearInterval(timer);setPlayIcon()}
+$('play').onclick=()=>playing?stop():start();$('prev').onclick=()=>{stop();go(cur-1)};$('next').onclick=()=>{stop();go(cur+1)};$('replay').onclick=()=>{go(0);start()};
+for(const k in TABS){const b=document.createElement('button');b.className='tab';b.dataset.flow=k;b.role='tab';b.textContent=TABS[k];b.onclick=()=>show(k);$('tabs').appendChild(b)}
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&playing)stop()});drawStatic();show('all');
+</script></body></html>
